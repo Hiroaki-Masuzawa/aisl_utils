@@ -1,0 +1,25 @@
+obstacle_range: 0.5
+raytrace_range: 5.0
+footprint: [[0.2, 0.2], [0.2, -0.2], [-0.2, 0.2], [-0.2, -0.2]]
+robot_radius: 0.30
+
+footprint_padding: 0.01
+
+global_frame: odom
+robot_base_frame: base_footprint
+
+static_map: false
+rolling_window: true
+track_unknown_space: true
+
+update_frequency: 4.0
+publish_frequency: 3.0
+
+#layer definitions
+obstacles_rgbd:
+  observation_sources: rgbd_sensor
+  rgbd_sensor: {sensor_frame: camera_link, data_type: PointCloud2, topic: /traversability_map_node/point_cloud, marking: true, clearing: true}
+
+inflation:
+  inflation_radius: 0.1
+
