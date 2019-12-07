@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Nodelet manager -->
+  <!--
+  <node pkg="nodelet" type="nodelet" name="host_nodelet_manager" args="manager" />
+  -->
+  <!-- pointcloud_to_laserscan nodelet -->
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+    <remap from="cloud_in" to="/traversability_map_node/point_cloud" />
+    <!--
+    <remap from="cloud_in" to="/camera/depth/points" />
+    -->
+
+    <param name="range_max" value="10.0" />
+    <param name="angle_max" value="0.48" />
+    <param name="angle_min" value="-0.48" />
+    <param name="range_max" value="10.0" />
+    <param name="target_frame" value="camera_link" />
+    <param name="use_inf" type="bool" value="false" />
+  </node>
+
+  <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">
+    <param name="base_frame" type="string" value="base_footprint" />
+    <param name="temporalUpdate" value="0.1" />
+  </node>
+</launch>
