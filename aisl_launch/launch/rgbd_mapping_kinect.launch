@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
    
@@ -13,13 +14,13 @@
    <param name="use_sim_time" value="$(arg rosbag)" />
    <arg name="tf_base" default="true" />
    <arg name="queue_size" default="100" />
-   <arg name="vis_odom" default="false" />
+   <arg name="vis_odom" default="true" />
 
    <!-- Which image resolution to process in rtabmap: sd, qhd, hd -->
    <arg name="resolution" default="qhd" />
    
    <!-- Fixed frame id, you may set "base_link" or "base_footprint" if they are published -->
-   <arg name="frame_id" default="base_footprint"/>
+   <arg name="frame_id" default="base_link"/>
    <arg name="delete" default="true"/>
 
    
@@ -36,7 +37,10 @@
    <!--
    <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="-0.1 0 0.3 -$(arg pi/2) 0 -$(arg pi/2) $(arg frame_id) camera_link 100" />
    -->
+   <!--
    <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="-0.1 0 0.3 0 0 0 $(arg frame_id) camera_link 100" />
+   -->
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="0.0 0.0 1.06 -1.57 -0.223599 -1.9000 $(arg frame_id) kinect2_base_link 100" />
   
    <!-- Choose visualization -->
    <arg name="rviz" default="false" />
@@ -52,8 +56,9 @@
 
    <!-- Topic names -->
    <arg name="image" default="/camera/rgb/image_rect_color" />
-   <arg name="depth" default="/camera/depth/image_rect" />
+   <arg name="depth" default="/camera/depth_registered/image" />
    <arg name="odom" default="/odom" />
+   <arg name="camera_info" default="/camera/rgb/camera_info" />
         
   <group ns="rtabmap">
   
@@ -61,7 +66,7 @@
     <node if="$(arg vis_odom)" pkg="rtabmap_ros" type="rgbd_odometry" name="visual_odometry" output="screen">
       <remap from="rgb/image" to="$(arg image)"/>
       <remap from="depth/image" to="$(arg depth)"/>
-      <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
 
       <param name="frame_id" type="string" value="$(arg frame_id)"/>
       <param name="approx_sync" type="bool" value="true"/>
@@ -122,7 +127,7 @@
 	
       <remap from="rgb/image" to="$(arg image)"/>
       <remap from="depth/image" to="$(arg depth)"/>
-      <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
 
       <param name="approx_sync" type="bool" value="true"/>
       <param name="queue_size" type="int" value="$(arg queue_size)" />
@@ -131,6 +136,13 @@
       <param name="GFTT/BlockSize" type="string" value="$(arg gftt_block_size)"/>
       <param name="GFTT/MinDistance" type="string" value="$(arg gftt_min_distance)"/>
       <param name="Odom/ResetCountdown" type="string" value="5"/>
+      <param name="RGBD/NewMapOdomChangeDistance" type="double" value="0" />
+      <param name="Rtabmap/DetectionRate" type="double" value="3" />
+      <!--
+      <param name="Rtabmap/LoopThr" type="double" value="1.0" />
+      <param name="Reg/Force3DoF"    value="true" />
+      <param name="Optimizer/Slam2D" value="true" />
+      -->
     </node>
 
     <node unless="$(arg delete)" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen">
@@ -140,7 +152,7 @@
       <remap from="odom" to="$(arg odom)" />
       <remap from="rgb/image" to="$(arg image)"/>
       <remap from="depth/image" to="$(arg depth)"/>
-      <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
 
       <param name="approx_sync" type="bool" value="true"/>
       <param name="queue_size" type="int" value="$(arg queue_size)" />
@@ -161,7 +173,7 @@
     
       <remap from="rgb/image" to="$(arg image)"/>
       <remap from="depth/image" to="$(arg depth)"/>
-      <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
       <param name="queue_size" type="int" value="$(arg queue_size)" />
     </node>
   </group>
@@ -174,7 +186,7 @@
   <node if="$(arg rviz)" pkg="nodelet" type="nodelet" name="data_odom_sync" args="load rtabmap_ros/data_odom_sync standalone_nodelet">
     <remap from="rgb/image_in" to="$(arg image)"/>
     <remap from="depth/image_in" to="$(arg depth)"/>
-    <remap from="rgb/camera_info_in" to="/camera/rgb/camera_info"/>
+    <remap from="rgb/camera_info_in" to="$(arg camera_info)"/>
 
     <remap from="odom_in"             to="$(arg odom)"/>
 
@@ -191,7 +203,7 @@
   <node pkg="nodelet" type="nodelet" name="points_xyzrgb" args="load rtabmap_ros/point_cloud_xyzrgb standalone_nodelet">
     <remap from="rgb/image" to="$(arg image)"/>
     <remap from="depth/image" to="$(arg depth)"/>
-    <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+    <remap from="rgb/camera_info_in" to="$(arg camera_info)"/>
 
     <param name="queue_size" type="int" value="$(arg queue_size)" />
     <param name="voxel_size" type="double" value="0.01"/>

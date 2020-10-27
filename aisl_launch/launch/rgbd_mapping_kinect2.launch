@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
    
@@ -25,16 +26,26 @@
    <!-- Rotate the camera -->
    <arg name="pi/2" value="1.5707963267948966"/>
    <arg name="2pi/3" value="2.09439510239"/>
+   <arg name="5pi/6" value="1.8"/>
    <arg name="optical_rotate" value="0 0 0 -$(arg 2pi/3) 0 -$(arg pi/2)" />
+   <!--
    <node pkg="tf" type="static_transform_publisher" name="kinect2_base_link"
         args="$(arg optical_rotate) kinect2_base_link kinect2_link 100" unless="$(arg rosbag)"/> 
+   -->
 
    <!-- If using rosbag and tf from base_link to kinect is not recorded -->
-   <node pkg="tf" type="static_transform_publisher" name="base_link" args="1 0 1.2 -$(arg pi/2) 0 -$(arg pi/2) base_link kinect2_link 100" />
+   <!--     greenhouse 2018  
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="0 0 1.06 -$(arg pi/2) 0 -$(arg pi/2) $(arg frame_id) kinect2_link 100" />
+  -->
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="0.0 0.0 1.06 -1.57 -0.223599 -1.9000 $(arg frame_id) kinect2_base_link 100" />
+   <!-- greenhouse 2019 -->
+   <!--
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="1 0 1.2 -$(arg pi/2) 0 -$(arg 5pi/6) base_link kinect2_link 100" />
+   -->
   
    <!-- Choose visualization -->
    <arg name="rviz" default="false" />
-   <arg name="rtabmapviz" default="true" /> 
+   <arg name="rtabmapviz" default="false" /> 
    
    <!-- Corresponding config files -->
    <arg name="rtabmapviz_cfg"          default="-d $(find rtabmap_ros)/launch/config/rgbd_gui.ini" />
