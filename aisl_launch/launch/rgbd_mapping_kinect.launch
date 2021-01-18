@@ -14,6 +14,7 @@
    <param name="use_sim_time" value="$(arg rosbag)" />
    <arg name="tf_base" default="true" />
    <arg name="queue_size" default="100" />
+   <arg name="vis_odom" default="true" />
 
    <!-- Which image resolution to process in rtabmap: sd, qhd, hd -->
    <arg name="resolution" default="qhd" />
@@ -26,7 +27,6 @@
    <!-- Rotate the camera -->
    <arg name="pi/2" value="1.5707963267948966"/>
    <arg name="2pi/3" value="2.09439510239"/>
-   <arg name="5pi/6" value="1.8"/>
    <arg name="optical_rotate" value="0 0 0 -$(arg 2pi/3) 0 -$(arg pi/2)" />
    <!--
    <node pkg="tf" type="static_transform_publisher" name="kinect2_base_link"
@@ -34,14 +34,13 @@
    -->
 
    <!-- If using rosbag and tf from base_link to kinect is not recorded -->
-   <!--     greenhouse 2018  
-   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="0 0 1.06 -$(arg pi/2) 0 -$(arg pi/2) $(arg frame_id) kinect2_link 100" />
-  -->
-   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="0.0 0.0 1.06 -1.57 -0.223599 -1.9000 $(arg frame_id) kinect2_base_link 100" />
-   <!-- greenhouse 2019 -->
    <!--
-   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="1 0 1.2 -$(arg pi/2) 0 -$(arg 5pi/6) base_link kinect2_link 100" />
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="-0.1 0 0.3 -$(arg pi/2) 0 -$(arg pi/2) $(arg frame_id) camera_link 100" />
    -->
+   <!--
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="-0.1 0 0.3 0 0 0 $(arg frame_id) camera_link 100" />
+   -->
+   <node pkg="tf" type="static_transform_publisher" name="$(arg frame_id)" args="0.0 0.0 1.06 -1.57 -0.223599 -1.9000 $(arg frame_id) kinect2_base_link 100" />
   
    <!-- Choose visualization -->
    <arg name="rviz" default="false" />
@@ -54,14 +53,20 @@
    <!-- slightly increase default parameters for larger images (qhd=720p) -->
    <arg name="gftt_block_size" default="5" /> 
    <arg name="gftt_min_distance" default="5" /> 
+
+   <!-- Topic names -->
+   <arg name="image" default="/camera/rgb/image_rect_color" />
+   <arg name="depth" default="/camera/depth_registered/image" />
+   <arg name="odom" default="/odom" />
+   <arg name="camera_info" default="/camera/rgb/camera_info" />
         
   <group ns="rtabmap">
   
     <!-- Odometry -->
-    <node pkg="rtabmap_ros" type="rgbd_odometry" name="visual_odometry" output="screen">
-      <remap from="rgb/image" to="/kinect2/$(arg resolution)/image_color_rect"/>
-      <remap from="depth/image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
-      <remap from="rgb/camera_info" to="/kinect2/$(arg resolution)/camera_info"/>
+    <node if="$(arg vis_odom)" pkg="rtabmap_ros" type="rgbd_odometry" name="visual_odometry" output="screen">
+      <remap from="rgb/image" to="$(arg image)"/>
+      <remap from="depth/image" to="$(arg depth)"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
 
       <param name="frame_id" type="string" value="$(arg frame_id)"/>
       <param name="approx_sync" type="bool" value="true"/>
@@ -80,7 +85,7 @@
     <!--
     <node pkg="rtabmap_ros" type="icp_odometry" name="icp_odometry" output="screen" >
       <remap from="scan_cloud"     to="/cloud"/>
-      <remap from="odom_info"      to="/rtabmap/odom_info"/>
+      <remap from="odom_info"      to="$(arg odom)_info"/>
       <remap from="odom"           to="/icp_odometry/odom"/>
                          
       <param name="frame_id"        type="string" value="base_link"/>   
@@ -118,13 +123,11 @@
       <param name="subscribe_depth" type="bool" value="true"/>
   	  <param name="frame_id" type="string" value="$(arg frame_id)"/>
 
-      <!--
-      <remap from="odom" to="/icp_odometry/odom" />
-      -->
+      <remap from="odom" to="$(arg odom)" />
 	
-      <remap from="rgb/image" to="/kinect2/$(arg resolution)/image_color_rect"/>
-      <remap from="depth/image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
-      <remap from="rgb/camera_info" to="/kinect2/$(arg resolution)/camera_info"/>
+      <remap from="rgb/image" to="$(arg image)"/>
+      <remap from="depth/image" to="$(arg depth)"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
 
       <param name="approx_sync" type="bool" value="true"/>
       <param name="queue_size" type="int" value="$(arg queue_size)" />
@@ -133,18 +136,23 @@
       <param name="GFTT/BlockSize" type="string" value="$(arg gftt_block_size)"/>
       <param name="GFTT/MinDistance" type="string" value="$(arg gftt_min_distance)"/>
       <param name="Odom/ResetCountdown" type="string" value="5"/>
+      <param name="RGBD/NewMapOdomChangeDistance" type="double" value="0" />
+      <param name="Rtabmap/DetectionRate" type="double" value="3" />
+      <!--
+      <param name="Rtabmap/LoopThr" type="double" value="1.0" />
+      <param name="Reg/Force3DoF"    value="true" />
+      <param name="Optimizer/Slam2D" value="true" />
+      -->
     </node>
 
     <node unless="$(arg delete)" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen">
       <param name="subscribe_depth" type="bool" value="true"/>
  	    <param name="frame_id" type="string" value="$(arg frame_id)"/>
 	
-      <!--
-      <remap from="odom" to="/icp_odometry/odom" />
-      -->
-      <remap from="rgb/image" to="/kinect2/$(arg resolution)/image_color_rect"/>
-      <remap from="depth/image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
-      <remap from="rgb/camera_info" to="/kinect2/$(arg resolution)/camera_info"/>
+      <remap from="odom" to="$(arg odom)" />
+      <remap from="rgb/image" to="$(arg image)"/>
+      <remap from="depth/image" to="$(arg depth)"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
 
       <param name="approx_sync" type="bool" value="true"/>
       <param name="queue_size" type="int" value="$(arg queue_size)" />
@@ -163,9 +171,9 @@
       <remap from="odom" to="/icp_odometry/odom" />
       -->
     
-      <remap from="rgb/image" to="/kinect2/$(arg resolution)/image_color_rect"/>
-      <remap from="depth/image" to="/kinect2/$(arg resolution)/image_depth_rect"/>
-      <remap from="rgb/camera_info" to="/kinect2/$(arg resolution)/camera_info"/>
+      <remap from="rgb/image" to="$(arg image)"/>
+      <remap from="depth/image" to="$(arg depth)"/>
+      <remap from="rgb/camera_info" to="$(arg camera_info)"/>
       <param name="queue_size" type="int" value="$(arg queue_size)" />
     </node>
   </group>
@@ -176,11 +184,11 @@
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
   <!--
   <node if="$(arg rviz)" pkg="nodelet" type="nodelet" name="data_odom_sync" args="load rtabmap_ros/data_odom_sync standalone_nodelet">
-    <remap from="rgb/image_in"       to="/kinect2/$(arg resolution)/image_color_rect"/>
-    <remap from="depth/image_in"     to="/kinect2/$(arg resolution)/image_depth_rect"/>
-    <remap from="rgb/camera_info_in" to="/kinect2/$(arg resolution)/camera_info"/>
+    <remap from="rgb/image_in" to="$(arg image)"/>
+    <remap from="depth/image_in" to="$(arg depth)"/>
+    <remap from="rgb/camera_info_in" to="$(arg camera_info)"/>
 
-    <remap from="odom_in"             to="/rtabmap/odom"/>
+    <remap from="odom_in"             to="$(arg odom)"/>
 
     <param name="approx_sync" type="bool" value="true"/>
     <param name="queue_size" type="int" value="$(arg queue_size)" />
@@ -193,9 +201,9 @@
   -->
 
   <node pkg="nodelet" type="nodelet" name="points_xyzrgb" args="load rtabmap_ros/point_cloud_xyzrgb standalone_nodelet">
-    <remap from="rgb/image"       to="/kinect2/$(arg resolution)/image_color_rect"/>
-    <remap from="depth/image"     to="/kinect2/$(arg resolution)/image_depth_rect"/>
-    <remap from="rgb/camera_info" to="/kinect2/$(arg resolution)/camera_info"/>
+    <remap from="rgb/image" to="$(arg image)"/>
+    <remap from="depth/image" to="$(arg depth)"/>
+    <remap from="rgb/camera_info_in" to="$(arg camera_info)"/>
 
     <param name="queue_size" type="int" value="$(arg queue_size)" />
     <param name="voxel_size" type="double" value="0.01"/>
