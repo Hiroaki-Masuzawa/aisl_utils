@@ -6,5 +6,5 @@ std_msgs/Header header
 string[] class_names
 
 # Segmentation Image
-sensor_msgs/Image segmentation_image #indexのみ
-sensor_msgs/Image[] score_image #各クラスごとのSoftmax値
+sensor_msgs/Image segmentation_image # only indices
+sensor_msgs/Image[] score_image # Soft-max values
