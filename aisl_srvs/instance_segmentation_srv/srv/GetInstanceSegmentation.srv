@@ -1,0 +1,3 @@
+sensor_msgs/Image img
+---
+deep_learning_msgs/InstanceSegmentation result
