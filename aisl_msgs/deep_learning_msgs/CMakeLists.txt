@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   InstanceSegmentation.msg
+  KeypointDetection.msg
   SemanticSegmentation.msg
   ObjectDetection.msg
 )
